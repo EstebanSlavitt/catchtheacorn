@@ -13,8 +13,9 @@ import (
 )
 
 type Acorn struct {
-	x float64
-	y float64
+	x      float64
+	y      float64
+	isMega bool
 }
 
 var (
@@ -33,10 +34,22 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
+	// Restart with R key
+	if g.gameOver && ebiten.IsKeyPressed(ebiten.KeyR) {
+		*g = Game{
+			playerX:   160,
+			acorns:    spawnAcorns(),
+			score:     0,
+			startTime: time.Now(),
+		}
+		return nil
+	}
+
 	if g.gameOver {
 		return nil
 	}
 
+	
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.playerX -= 4
 	}
@@ -44,11 +57,15 @@ func (g *Game) Update() error {
 		g.playerX += 4
 	}
 
-	// Update all acorns
+	
 	for i := range g.acorns {
-		g.acorns[i].y += 1.5
+		speed := 1.5
+		if g.acorns[i].isMega {
+			speed = 2.2 
+		}
+		g.acorns[i].y += speed
 
-		// Check for catch
+		
 		squirrelWidth := 80.0
 		squirrelHeight := 80.0
 		acornWidth := 30.0
@@ -76,17 +93,20 @@ func (g *Game) Update() error {
 			squirrelRect.x+squirrelRect.w > acornRect.x &&
 			squirrelRect.y < acornRect.y+acornRect.h &&
 			squirrelRect.y+squirrelRect.h > acornRect.y {
-			g.score++
+			if g.acorns[i].isMega {
+				g.score += 5
+			} else {
+				g.score++
+			}
 			g.acorns[i] = g.newAcorn()
 		}
 
-		// Reset acorn if missed (but don't reset score)
 		if g.acorns[i].y > 480 {
 			g.acorns[i] = g.newAcorn()
 		}
 	}
 
-	// Timer check
+	// Time check
 	g.timeElapsed = time.Since(g.startTime).Seconds()
 	if g.timeElapsed >= 90 {
 		g.gameOver = true
@@ -111,14 +131,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// Acorns
 	for _, acorn := range g.acorns {
 		acornOpts := &ebiten.DrawImageOptions{}
-		acornOpts.GeoM.Scale(0.07, 0.07)
+		scale := 0.07
+		if acorn.isMega {
+			scale = 0.1
+		}
+		acornOpts.GeoM.Scale(scale, scale)
 		acornOpts.GeoM.Translate(acorn.x, acorn.y)
 		screen.DrawImage(acornImg, acornOpts)
 	}
 
-	// Score + Timer
+	
 	if g.gameOver {
-		ebitenutil.DebugPrint(screen, "GAME OVER\nFinal Score: "+strconv.Itoa(g.score))
+		ebitenutil.DebugPrint(screen, "GAME OVER\nFinal Score: "+strconv.Itoa(g.score)+"\nPress R to Restart")
 	} else {
 		remaining := int(90 - g.timeElapsed)
 		ebitenutil.DebugPrint(screen, "Score: "+strconv.Itoa(g.score)+"   Time left: "+strconv.Itoa(remaining)+"s")
@@ -127,8 +151,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) newAcorn() Acorn {
 	return Acorn{
-		x: float64(rand.Intn(600)),
-		y: 0,
+		x:      float64(rand.Intn(600)),
+		y:      0,
+		isMega: rand.Float64() < 0.1, 
+	}
+}
+
+func spawnAcorns() []Acorn {
+	return []Acorn{
+		{x: float64(rand.Intn(600)), y: 0, isMega: rand.Float64() < 0.1},
+		{x: float64(rand.Intn(600)), y: -150, isMega: rand.Float64() < 0.1},
+		{x: float64(rand.Intn(600)), y: -300, isMega: rand.Float64() < 0.1},
 	}
 }
 
@@ -157,15 +190,9 @@ func main() {
 	squirrelImg = loadImage("assets/squirrel.png")
 	acornImg = loadImage("assets/acorn.png")
 
-	acorns := []Acorn{
-		{x: float64(rand.Intn(600)), y: 0},
-		{x: float64(rand.Intn(600)), y: -150},
-		{x: float64(rand.Intn(600)), y: -300},
-	}
-
 	if err := ebiten.RunGame(&Game{
 		playerX:   160,
-		acorns:    acorns,
+		acorns:    spawnAcorns(),
 		score:     0,
 		startTime: time.Now(),
 	}); err != nil {
