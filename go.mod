@@ -1,4 +1,4 @@
-module foo
+module catch-the-acorns
 
 go 1.24.2
 
