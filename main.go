@@ -2,13 +2,20 @@ package main
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image"
 	_ "image/png"
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 	"time"
 )
+
+type Acorn struct {
+	x float64
+	y float64
+}
 
 var (
 	treeImg     *ebiten.Image
@@ -17,13 +24,19 @@ var (
 )
 
 type Game struct {
-	playerX float64
-	acornX  float64
-	acornY  float64
+	playerX     float64
+	acorns      []Acorn
+	score       int
+	startTime   time.Time
+	gameOver    bool
+	timeElapsed float64
 }
 
 func (g *Game) Update() error {
-	// Faster squirrel movement
+	if g.gameOver {
+		return nil
+	}
+
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.playerX -= 4
 	}
@@ -31,13 +44,52 @@ func (g *Game) Update() error {
 		g.playerX += 4
 	}
 
-	// Slower acorn falling speed
-	g.acornY += 1.5
+	// Update all acorns
+	for i := range g.acorns {
+		g.acorns[i].y += 1.5
 
-	// Reset acorn if it hits the ground
-	if g.acornY > 480 {
-		g.acornY = 0
-		g.acornX = float64(rand.Intn(600))
+		// Check for catch
+		squirrelWidth := 80.0
+		squirrelHeight := 80.0
+		acornWidth := 30.0
+		acornHeight := 30.0
+
+		squirrelRect := struct {
+			x, y, w, h float64
+		}{
+			x: g.playerX,
+			y: 340,
+			w: squirrelWidth,
+			h: squirrelHeight,
+		}
+
+		acornRect := struct {
+			x, y, w, h float64
+		}{
+			x: g.acorns[i].x,
+			y: g.acorns[i].y,
+			w: acornWidth,
+			h: acornHeight,
+		}
+
+		if squirrelRect.x < acornRect.x+acornRect.w &&
+			squirrelRect.x+squirrelRect.w > acornRect.x &&
+			squirrelRect.y < acornRect.y+acornRect.h &&
+			squirrelRect.y+squirrelRect.h > acornRect.y {
+			g.score++
+			g.acorns[i] = g.newAcorn()
+		}
+
+		// Reset acorn if missed (but don't reset score)
+		if g.acorns[i].y > 480 {
+			g.acorns[i] = g.newAcorn()
+		}
+	}
+
+	// Timer check
+	g.timeElapsed = time.Since(g.startTime).Seconds()
+	if g.timeElapsed >= 90 {
+		g.gameOver = true
 	}
 
 	return nil
@@ -46,7 +98,7 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	// Tree
 	treeOpts := &ebiten.DrawImageOptions{}
-	treeOpts.GeoM.Scale(0.3, 0.3)
+	treeOpts.GeoM.Scale(0.4, 0.4)
 	treeOpts.GeoM.Translate(100, 50)
 	screen.DrawImage(treeImg, treeOpts)
 
@@ -56,11 +108,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	squirrelOpts.GeoM.Translate(g.playerX, 340)
 	screen.DrawImage(squirrelImg, squirrelOpts)
 
-	// Acorn
-	acornOpts := &ebiten.DrawImageOptions{}
-	acornOpts.GeoM.Scale(0.1, 0.1)
-	acornOpts.GeoM.Translate(g.acornX, g.acornY)
-	screen.DrawImage(acornImg, acornOpts)
+	// Acorns
+	for _, acorn := range g.acorns {
+		acornOpts := &ebiten.DrawImageOptions{}
+		acornOpts.GeoM.Scale(0.07, 0.07)
+		acornOpts.GeoM.Translate(acorn.x, acorn.y)
+		screen.DrawImage(acornImg, acornOpts)
+	}
+
+	// Score + Timer
+	if g.gameOver {
+		ebitenutil.DebugPrint(screen, "GAME OVER\nFinal Score: "+strconv.Itoa(g.score))
+	} else {
+		remaining := int(90 - g.timeElapsed)
+		ebitenutil.DebugPrint(screen, "Score: "+strconv.Itoa(g.score)+"   Time left: "+strconv.Itoa(remaining)+"s")
+	}
+}
+
+func (g *Game) newAcorn() Acorn {
+	return Acorn{
+		x: float64(rand.Intn(600)),
+		y: 0,
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -88,13 +157,17 @@ func main() {
 	squirrelImg = loadImage("assets/squirrel.png")
 	acornImg = loadImage("assets/acorn.png")
 
-	ebiten.SetWindowSize(640, 480)
-	ebiten.SetWindowTitle("Catch the Acorn")
+	acorns := []Acorn{
+		{x: float64(rand.Intn(600)), y: 0},
+		{x: float64(rand.Intn(600)), y: -150},
+		{x: float64(rand.Intn(600)), y: -300},
+	}
 
 	if err := ebiten.RunGame(&Game{
-		playerX: 160,
-		acornX:  float64(rand.Intn(600)),
-		acornY:  0,
+		playerX:   160,
+		acorns:    acorns,
+		score:     0,
+		startTime: time.Now(),
 	}); err != nil {
 		log.Fatal(err)
 	}
