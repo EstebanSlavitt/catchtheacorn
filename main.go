@@ -24,29 +24,33 @@ var (
 	treeImg       *ebiten.Image
 	squirrelImg   *ebiten.Image
 	acornImg      *ebiten.Image
+	sunImg        *ebiten.Image
 )
 
 type Game struct {
-	playerX     float64
-	acorns      []Acorn
-	cloud1X     float64
-	cloud2X     float64
-	score       int
-	startTime   time.Time
-	gameOver    bool
-	timeElapsed float64
+	playerX      float64
+	acorns       []Acorn
+	cloud1X      float64
+	cloud2X      float64
+	sunX         float64
+	sunDirection float64
+	score        int
+	startTime    time.Time
+	gameOver     bool
+	timeElapsed  float64
 }
 
 func (g *Game) Update() error {
-	// Restart with R key
 	if g.gameOver && ebiten.IsKeyPressed(ebiten.KeyR) {
 		*g = Game{
-			playerX:   160,
-			acorns:    spawnAcorns(),
-			cloud1X:   0,
-			cloud2X:   -300,
-			score:     0,
-			startTime: time.Now(),
+			playerX:      160,
+			acorns:       spawnAcorns(),
+			cloud1X:      0,
+			cloud2X:      -300,
+			sunX:         20,
+			sunDirection: 1,
+			score:        0,
+			startTime:    time.Now(),
 		}
 		return nil
 	}
@@ -55,7 +59,6 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	// Squirrel movement
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.playerX -= 4
 	}
@@ -63,10 +66,8 @@ func (g *Game) Update() error {
 		g.playerX += 4
 	}
 
-	// Cloud movement (faster now)
 	g.cloud1X += 0.3
 	g.cloud2X += 0.4
-
 	if g.cloud1X > 700 {
 		g.cloud1X = -100
 	}
@@ -74,7 +75,13 @@ func (g *Game) Update() error {
 		g.cloud2X = -100
 	}
 
-	// Update acorns
+	g.sunX += g.sunDirection * 0.2
+	if g.sunX > 80 {
+		g.sunDirection = -1
+	} else if g.sunX < 20 {
+		g.sunDirection = 1
+	}
+
 	for i := range g.acorns {
 		speed := 1.5
 		if g.acorns[i].isMega {
@@ -82,7 +89,6 @@ func (g *Game) Update() error {
 		}
 		g.acorns[i].y += speed
 
-		// Bounding box detection
 		squirrelWidth := 80.0
 		squirrelHeight := 80.0
 		acornWidth := 30.0
@@ -123,7 +129,6 @@ func (g *Game) Update() error {
 		}
 	}
 
-	// Time check
 	g.timeElapsed = time.Since(g.startTime).Seconds()
 	if g.timeElapsed >= 90 {
 		g.gameOver = true
@@ -133,7 +138,7 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Background (scaled to full screen)
+	
 	bgOpts := &ebiten.DrawImageOptions{}
 	bgOpts.GeoM.Scale(
 		640.0/float64(backgroundImg.Bounds().Dx()),
@@ -141,19 +146,34 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	)
 	screen.DrawImage(backgroundImg, bgOpts)
 
-	// Tree (drawn BEFORE clouds now!)
+	
 	treeOpts := &ebiten.DrawImageOptions{}
 	treeOpts.GeoM.Scale(0.4, 0.4)
 	treeOpts.GeoM.Translate(100, 50)
 	screen.DrawImage(treeImg, treeOpts)
 
-	// Squirrel
+	
 	squirrelOpts := &ebiten.DrawImageOptions{}
 	squirrelOpts.GeoM.Scale(0.2, 0.2)
 	squirrelOpts.GeoM.Translate(g.playerX, 340)
 	screen.DrawImage(squirrelImg, squirrelOpts)
 
-	// Acorns
+	 
+	cloudOpts1 := &ebiten.DrawImageOptions{}
+	cloudOpts1.GeoM.Translate(g.cloud1X, 50)
+	screen.DrawImage(cloudImg, cloudOpts1)
+
+	cloudOpts2 := &ebiten.DrawImageOptions{}
+	cloudOpts2.GeoM.Translate(g.cloud2X, 100)
+	screen.DrawImage(cloudImg, cloudOpts2)
+
+	
+	sunOpts := &ebiten.DrawImageOptions{}
+	sunOpts.GeoM.Scale(0.2, 0.2)
+	sunOpts.GeoM.Translate(g.sunX, 20)
+	screen.DrawImage(sunImg, sunOpts)
+
+	// Acorns (drawn LAST so they are visible!)
 	for _, acorn := range g.acorns {
 		acornOpts := &ebiten.DrawImageOptions{}
 		scale := 0.07
@@ -165,16 +185,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(acornImg, acornOpts)
 	}
 
-	// Clouds (drawn LAST to float over everything)
-	cloudOpts1 := &ebiten.DrawImageOptions{}
-	cloudOpts1.GeoM.Translate(g.cloud1X, 50)
-	screen.DrawImage(cloudImg, cloudOpts1)
-
-	cloudOpts2 := &ebiten.DrawImageOptions{}
-	cloudOpts2.GeoM.Translate(g.cloud2X, 100)
-	screen.DrawImage(cloudImg, cloudOpts2)
-
-	// Score + Timer
+	
 	if g.gameOver {
 		ebitenutil.DebugPrint(screen, "GAME OVER\nFinal Score: "+strconv.Itoa(g.score)+"\nPress R to Restart")
 	} else {
@@ -225,14 +236,17 @@ func main() {
 	treeImg = loadImage("assets/tree.png")
 	squirrelImg = loadImage("assets/squirrel.png")
 	acornImg = loadImage("assets/acorn.png")
+	sunImg = loadImage("assets/sun.png")
 
 	if err := ebiten.RunGame(&Game{
-		playerX:   160,
-		acorns:    spawnAcorns(),
-		cloud1X:   0,
-		cloud2X:   -300,
-		score:     0,
-		startTime: time.Now(),
+		playerX:      160,
+		acorns:       spawnAcorns(),
+		cloud1X:      0,
+		cloud2X:      -300,
+		sunX:         20,
+		sunDirection: 1,
+		score:        0,
+		startTime:    time.Now(),
 	}); err != nil {
 		log.Fatal(err)
 	}
