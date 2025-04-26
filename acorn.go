@@ -1,0 +1,92 @@
+package main
+
+import (
+	"math/rand"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+type Acorn struct {
+	X      float64
+	Y      float64
+	IsMega bool
+}
+
+func NewAcorn() Acorn {
+	return Acorn{
+		X:      float64(rand.Intn(600)),
+		Y:      0,
+		IsMega: rand.Float64() < 0.1,
+	}
+}
+
+func SpawnAcorns() []Acorn {
+	return []Acorn{
+		NewAcorn(),
+		NewAcorn(),
+		NewAcorn(),
+	}
+}
+
+func (g *Game) UpdateAcorns() {
+	for i := range g.acorns {
+		speed := 1.5
+		if g.acorns[i].IsMega {
+			speed = 2.2
+		}
+		g.acorns[i].Y += speed
+
+		squirrelWidth := 80.0
+		squirrelHeight := 80.0
+		acornWidth := 30.0
+		acornHeight := 30.0
+
+		squirrelRect := struct {
+			x, y, w, h float64
+		}{
+			x: g.squirrel.X,
+			y: g.squirrel.Y,
+			w: squirrelWidth,
+			h: squirrelHeight,
+		}
+
+		acornRect := struct {
+			x, y, w, h float64
+		}{
+			x: g.acorns[i].X,
+			y: g.acorns[i].Y,
+			w: acornWidth,
+			h: acornHeight,
+		}
+
+		if squirrelRect.x < acornRect.x+acornRect.w &&
+			squirrelRect.x+squirrelRect.w > acornRect.x &&
+			squirrelRect.y < acornRect.y+acornRect.h &&
+			squirrelRect.y+squirrelRect.h > acornRect.y {
+			if g.acorns[i].IsMega {
+				g.score += 5
+			} else {
+				g.score++
+			}
+			g.acorns[i] = NewAcorn()
+		}
+
+		if g.acorns[i].Y > 480 {
+			g.acorns[i] = NewAcorn()
+		}
+	}
+
+}
+
+func (g *Game) DrawAcorns(screen *ebiten.Image) {
+	for _, acorn := range g.acorns {
+		acornOpts := &ebiten.DrawImageOptions{}
+		scale := 0.07
+		if acorn.IsMega {
+			scale = 0.1
+		}
+		acornOpts.GeoM.Scale(scale, scale)
+		acornOpts.GeoM.Translate(acorn.X, acorn.Y)
+		screen.DrawImage(acornImg, acornOpts)
+	}
+}
