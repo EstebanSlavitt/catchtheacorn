@@ -19,14 +19,18 @@ type Acorn struct {
 }
 
 var (
-	treeImg     *ebiten.Image
-	squirrelImg *ebiten.Image
-	acornImg    *ebiten.Image
+	backgroundImg *ebiten.Image
+	cloudImg      *ebiten.Image
+	treeImg       *ebiten.Image
+	squirrelImg   *ebiten.Image
+	acornImg      *ebiten.Image
 )
 
 type Game struct {
 	playerX     float64
 	acorns      []Acorn
+	cloud1X     float64
+	cloud2X     float64
 	score       int
 	startTime   time.Time
 	gameOver    bool
@@ -39,6 +43,8 @@ func (g *Game) Update() error {
 		*g = Game{
 			playerX:   160,
 			acorns:    spawnAcorns(),
+			cloud1X:   0,
+			cloud2X:   -300,
 			score:     0,
 			startTime: time.Now(),
 		}
@@ -49,7 +55,7 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	
+	// Squirrel movement
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.playerX -= 4
 	}
@@ -57,15 +63,26 @@ func (g *Game) Update() error {
 		g.playerX += 4
 	}
 
-	
+	// Cloud movement (faster now)
+	g.cloud1X += 0.3
+	g.cloud2X += 0.4
+
+	if g.cloud1X > 700 {
+		g.cloud1X = -100
+	}
+	if g.cloud2X > 700 {
+		g.cloud2X = -100
+	}
+
+	// Update acorns
 	for i := range g.acorns {
 		speed := 1.5
 		if g.acorns[i].isMega {
-			speed = 2.2 
+			speed = 2.2
 		}
 		g.acorns[i].y += speed
 
-		
+		// Bounding box detection
 		squirrelWidth := 80.0
 		squirrelHeight := 80.0
 		acornWidth := 30.0
@@ -116,7 +133,15 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Tree
+	// Background (scaled to full screen)
+	bgOpts := &ebiten.DrawImageOptions{}
+	bgOpts.GeoM.Scale(
+		640.0/float64(backgroundImg.Bounds().Dx()),
+		480.0/float64(backgroundImg.Bounds().Dy()),
+	)
+	screen.DrawImage(backgroundImg, bgOpts)
+
+	// Tree (drawn BEFORE clouds now!)
 	treeOpts := &ebiten.DrawImageOptions{}
 	treeOpts.GeoM.Scale(0.4, 0.4)
 	treeOpts.GeoM.Translate(100, 50)
@@ -140,7 +165,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(acornImg, acornOpts)
 	}
 
-	
+	// Clouds (drawn LAST to float over everything)
+	cloudOpts1 := &ebiten.DrawImageOptions{}
+	cloudOpts1.GeoM.Translate(g.cloud1X, 50)
+	screen.DrawImage(cloudImg, cloudOpts1)
+
+	cloudOpts2 := &ebiten.DrawImageOptions{}
+	cloudOpts2.GeoM.Translate(g.cloud2X, 100)
+	screen.DrawImage(cloudImg, cloudOpts2)
+
+	// Score + Timer
 	if g.gameOver {
 		ebitenutil.DebugPrint(screen, "GAME OVER\nFinal Score: "+strconv.Itoa(g.score)+"\nPress R to Restart")
 	} else {
@@ -153,7 +187,7 @@ func (g *Game) newAcorn() Acorn {
 	return Acorn{
 		x:      float64(rand.Intn(600)),
 		y:      0,
-		isMega: rand.Float64() < 0.1, 
+		isMega: rand.Float64() < 0.1,
 	}
 }
 
@@ -186,6 +220,8 @@ func loadImage(path string) *ebiten.Image {
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
+	backgroundImg = loadImage("assets/background.png")
+	cloudImg = loadImage("assets/cloud.png")
 	treeImg = loadImage("assets/tree.png")
 	squirrelImg = loadImage("assets/squirrel.png")
 	acornImg = loadImage("assets/acorn.png")
@@ -193,6 +229,8 @@ func main() {
 	if err := ebiten.RunGame(&Game{
 		playerX:   160,
 		acorns:    spawnAcorns(),
+		cloud1X:   0,
+		cloud2X:   -300,
 		score:     0,
 		startTime: time.Now(),
 	}); err != nil {
