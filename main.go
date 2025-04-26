@@ -3,11 +3,9 @@ package main
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"image"
 	_ "image/png"
 	"log"
 	"math/rand"
-	"os"
 	"strconv"
 	"time"
 )
@@ -215,13 +213,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func loadImage(path string) *ebiten.Image {
-	f, err := os.Open(path)
-	if err != nil {
-		log.Fatal("Error opening image:", path, err)
-	}
-	defer f.Close()
-
-	img, _, err := image.Decode(f)
+	
+	img, _, err := ebitenutil.NewImageFromFile(path)
 	if err != nil {
 		log.Fatal("Error decoding image:", path, err)
 	}
@@ -229,7 +222,6 @@ func loadImage(path string) *ebiten.Image {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 
 	backgroundImg = loadImage("assets/background.png")
 	cloudImg = loadImage("assets/cloud.png")
