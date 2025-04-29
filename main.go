@@ -16,6 +16,8 @@ var (
 	treeImg       *ebiten.Image
 	squirrelImg   *ebiten.Image
 	acornImg      *ebiten.Image
+	megaAcornImg  *ebiten.Image
+	bombImg       *ebiten.Image
 	sunImg        *ebiten.Image
 )
 
@@ -103,6 +105,8 @@ func main() {
 	treeImg = loadImage("assets/tree.png")
 	squirrelImg = loadImage("assets/squirrel.png")
 	acornImg = loadImage("assets/acorn.png")
+	megaAcornImg = loadImage("assets/mega_acorn.png")
+	bombImg = loadImage("assets/bomb.png")
 	sunImg = loadImage("assets/sun.png")
 
 	if err := ebiten.RunGame(&Game{
