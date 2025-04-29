@@ -1,8 +1,12 @@
 package main
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"math"
 
-// UpdateBackground moves the clouds and sun smoothly across the screen.
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+// UpdateBackground handles movement of the clouds and sun (bobbing effect).
 func (g *Game) UpdateBackground() {
 	// Move clouds
 	g.cloud1X += 0.3
@@ -14,18 +18,17 @@ func (g *Game) UpdateBackground() {
 		g.cloud2X = -100
 	}
 
-	// Move sun side-to-side
-	g.sunX += g.sunDirection * 0.2
-	if g.sunX > 80 {
-		g.sunDirection = -1
-	} else if g.sunX < 20 {
-		g.sunDirection = 1
+	// Bob the sun in place like Paper Mario
+	g.sunAngle += 0.02
+	if g.sunAngle > 6.28 {
+		g.sunAngle = 0
 	}
+	g.sunY = 20 + 5*math.Sin(g.sunAngle)
 }
 
-// DrawBackground draws the static and animated background elements.
+// DrawBackground draws the background image, sun, clouds, and tree.
 func (g *Game) DrawBackground(screen *ebiten.Image) {
-	// Draw background sky image
+	// Draw background image
 	bgOpts := &ebiten.DrawImageOptions{}
 	bgOpts.GeoM.Scale(
 		640.0/float64(backgroundImg.Bounds().Dx()),
@@ -36,7 +39,7 @@ func (g *Game) DrawBackground(screen *ebiten.Image) {
 	// Draw sun
 	sunOpts := &ebiten.DrawImageOptions{}
 	sunOpts.GeoM.Scale(0.2, 0.2)
-	sunOpts.GeoM.Translate(g.sunX, 20)
+	sunOpts.GeoM.Translate(g.sunX, g.sunY)
 	screen.DrawImage(sunImg, sunOpts)
 
 	// Draw clouds

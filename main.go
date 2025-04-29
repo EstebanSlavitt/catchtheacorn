@@ -25,6 +25,8 @@ type Game struct {
 	cloud1X      float64
 	cloud2X      float64
 	sunX         float64
+	sunY         float64
+	sunAngle     float64
 	sunDirection float64
 	score        int
 	startTime    time.Time
@@ -40,6 +42,8 @@ func (g *Game) Update() error {
 			cloud1X:      0,
 			cloud2X:      -300,
 			sunX:         20,
+			sunY:         20,
+			sunAngle:     0,
 			sunDirection: 1,
 			score:        0,
 			startTime:    time.Now(),
@@ -107,6 +111,8 @@ func main() {
 		cloud1X:      0,
 		cloud2X:      -300,
 		sunX:         20,
+		sunY:         20,
+		sunAngle:     0,
 		sunDirection: 1,
 		score:        0,
 		startTime:    time.Now(),
