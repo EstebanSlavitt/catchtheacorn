@@ -10,13 +10,16 @@ type Acorn struct {
 	X      float64
 	Y      float64
 	IsMega bool
+	IsBomb bool
 }
 
 func NewAcorn() Acorn {
+	r := rand.Float64()
 	return Acorn{
 		X:      float64(rand.Intn(600)),
 		Y:      0,
-		IsMega: rand.Float64() < 0.1,
+		IsMega: r < 0.1,
+		IsBomb: r >= 0.9,
 	}
 }
 
@@ -63,7 +66,14 @@ func (g *Game) UpdateAcorns() {
 			squirrelRect.x+squirrelRect.w > acornRect.x &&
 			squirrelRect.y < acornRect.y+acornRect.h &&
 			squirrelRect.y+squirrelRect.h > acornRect.y {
-			if g.acorns[i].IsMega {
+
+			if g.acorns[i].IsBomb {
+				if g.score >= 5 {
+					g.score -= 5
+				} else {
+					g.score = 0
+				}
+			} else if g.acorns[i].IsMega {
 				g.score += 5
 			} else {
 				g.score++
@@ -71,22 +81,33 @@ func (g *Game) UpdateAcorns() {
 			g.acorns[i] = NewAcorn()
 		}
 
-		if g.acorns[i].Y > 480 {
+		if g.acorns[i].Y > 380 {
 			g.acorns[i] = NewAcorn()
 		}
 	}
-
 }
 
 func (g *Game) DrawAcorns(screen *ebiten.Image) {
 	for _, acorn := range g.acorns {
 		acornOpts := &ebiten.DrawImageOptions{}
-		scale := 0.07
+
+		// Set scale based on type
+		scale := 0.05 // Default for regular acorns
 		if acorn.IsMega {
 			scale = 0.1
 		}
 		acornOpts.GeoM.Scale(scale, scale)
 		acornOpts.GeoM.Translate(acorn.X, acorn.Y)
-		screen.DrawImage(acornImg, acornOpts)
+
+		var img *ebiten.Image
+		if acorn.IsBomb {
+			img = bombImg
+		} else if acorn.IsMega {
+			img = megaAcornImg
+		} else {
+			img = acornImg
+		}
+
+		screen.DrawImage(img, acornOpts)
 	}
 }

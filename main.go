@@ -16,7 +16,11 @@ var (
 	treeImg       *ebiten.Image
 	squirrelImg   *ebiten.Image
 	acornImg      *ebiten.Image
+	megaAcornImg  *ebiten.Image
+	bombImg       *ebiten.Image
 	sunImg        *ebiten.Image
+	grassImg      *ebiten.Image
+	basketImg     *ebiten.Image
 )
 
 type Game struct {
@@ -25,6 +29,8 @@ type Game struct {
 	cloud1X      float64
 	cloud2X      float64
 	sunX         float64
+	sunY         float64
+	sunAngle     float64
 	sunDirection float64
 	score        int
 	startTime    time.Time
@@ -40,6 +46,8 @@ func (g *Game) Update() error {
 			cloud1X:      0,
 			cloud2X:      -300,
 			sunX:         20,
+			sunY:         20,
+			sunAngle:     0,
 			sunDirection: 1,
 			score:        0,
 			startTime:    time.Now(),
@@ -64,12 +72,18 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+
 	g.DrawBackground(screen)
 
 	squirrelOpts := &ebiten.DrawImageOptions{}
 	squirrelOpts.GeoM.Scale(0.2, 0.2)
 	squirrelOpts.GeoM.Translate(g.squirrel.X, g.squirrel.Y)
 	screen.DrawImage(squirrelImg, squirrelOpts)
+
+	basketOpts := &ebiten.DrawImageOptions{}
+	basketOpts.GeoM.Scale(0.045, 0.045)
+	basketOpts.GeoM.Translate(g.squirrel.X+29, g.squirrel.Y+75)
+	screen.DrawImage(basketImg, basketOpts)
 
 	g.DrawAcorns(screen)
 
@@ -99,7 +113,11 @@ func main() {
 	treeImg = loadImage("assets/tree.png")
 	squirrelImg = loadImage("assets/squirrel.png")
 	acornImg = loadImage("assets/acorn.png")
+	megaAcornImg = loadImage("assets/mega_acorn.png")
+	bombImg = loadImage("assets/bomb.png")
 	sunImg = loadImage("assets/sun.png")
+	grassImg = loadImage("assets/grass.png")
+	basketImg = loadImage("assets/basket.png")
 
 	if err := ebiten.RunGame(&Game{
 		squirrel:     NewSquirrel(),
@@ -107,6 +125,8 @@ func main() {
 		cloud1X:      0,
 		cloud2X:      -300,
 		sunX:         20,
+		sunY:         20,
+		sunAngle:     0,
 		sunDirection: 1,
 		score:        0,
 		startTime:    time.Now(),
