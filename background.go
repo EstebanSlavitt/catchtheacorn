@@ -6,7 +6,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// UpdateBackground handles movement of the clouds and sun (bobbing effect).
 func (g *Game) UpdateBackground() {
 	// Move clouds
 	g.cloud1X += 0.3
@@ -18,7 +17,7 @@ func (g *Game) UpdateBackground() {
 		g.cloud2X = -100
 	}
 
-	// Bob the sun in place like Paper Mario
+	// Sun bobbing
 	g.sunAngle += 0.02
 	if g.sunAngle > 6.28 {
 		g.sunAngle = 0
@@ -26,9 +25,8 @@ func (g *Game) UpdateBackground() {
 	g.sunY = 20 + 5*math.Sin(g.sunAngle)
 }
 
-// DrawBackground draws the background image, sun, clouds, and tree.
 func (g *Game) DrawBackground(screen *ebiten.Image) {
-	// Draw background image
+	// Sky background
 	bgOpts := &ebiten.DrawImageOptions{}
 	bgOpts.GeoM.Scale(
 		640.0/float64(backgroundImg.Bounds().Dx()),
@@ -36,24 +34,35 @@ func (g *Game) DrawBackground(screen *ebiten.Image) {
 	)
 	screen.DrawImage(backgroundImg, bgOpts)
 
-	// Draw sun
+	// Sun
 	sunOpts := &ebiten.DrawImageOptions{}
-	sunOpts.GeoM.Scale(0.2, 0.2)
+	sunOpts.GeoM.Scale(0.18, 0.18)
 	sunOpts.GeoM.Translate(g.sunX, g.sunY)
 	screen.DrawImage(sunImg, sunOpts)
 
-	// Draw clouds
-	cloudOpts1 := &ebiten.DrawImageOptions{}
-	cloudOpts1.GeoM.Translate(g.cloud1X, 50)
-	screen.DrawImage(cloudImg, cloudOpts1)
+	// Clouds
+	cloud1 := &ebiten.DrawImageOptions{}
+	cloud1.GeoM.Scale(0.4, 0.4)
+	cloud1.GeoM.Translate(g.cloud1X, 50)
+	screen.DrawImage(cloudImg, cloud1)
 
-	cloudOpts2 := &ebiten.DrawImageOptions{}
-	cloudOpts2.GeoM.Translate(g.cloud2X, 100)
-	screen.DrawImage(cloudImg, cloudOpts2)
+	cloud2 := &ebiten.DrawImageOptions{}
+	cloud2.GeoM.Scale(0.4, 0.4)
+	cloud2.GeoM.Translate(g.cloud2X, 100)
+	screen.DrawImage(cloudImg, cloud2)
 
-	// Draw tree
+	// Tree
 	treeOpts := &ebiten.DrawImageOptions{}
-	treeOpts.GeoM.Scale(0.4, 0.4)
-	treeOpts.GeoM.Translate(100, 50)
+	treeOpts.GeoM.Scale(0.45, 0.45)
+	treeOpts.GeoM.Translate(120, 100)
 	screen.DrawImage(treeImg, treeOpts)
+
+	// ✅ Grass — Mario-style, shows dirt, raised up a little
+	grassOpts := &ebiten.DrawImageOptions{}
+	grassOpts.GeoM.Scale(
+		640.0/float64(grassImg.Bounds().Dx()),
+		140.0/float64(grassImg.Bounds().Dy()),
+	)
+	grassOpts.GeoM.Translate(0, 360) // Move up to show base
+	screen.DrawImage(grassImg, grassOpts)
 }

@@ -19,6 +19,7 @@ var (
 	megaAcornImg  *ebiten.Image
 	bombImg       *ebiten.Image
 	sunImg        *ebiten.Image
+	grassImg      *ebiten.Image
 )
 
 type Game struct {
@@ -70,15 +71,19 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Draw background, sun, clouds, tree, and grass
 	g.DrawBackground(screen)
 
+	// Squirrel (behind grass)
 	squirrelOpts := &ebiten.DrawImageOptions{}
 	squirrelOpts.GeoM.Scale(0.2, 0.2)
 	squirrelOpts.GeoM.Translate(g.squirrel.X, g.squirrel.Y)
 	screen.DrawImage(squirrelImg, squirrelOpts)
 
+	// Acorns
 	g.DrawAcorns(screen)
 
+	// UI
 	if g.gameOver {
 		ebitenutil.DebugPrint(screen, "GAME OVER\nFinal Score: "+strconv.Itoa(g.score)+"\nPress R to Restart")
 	} else {
@@ -108,6 +113,7 @@ func main() {
 	megaAcornImg = loadImage("assets/mega_acorn.png")
 	bombImg = loadImage("assets/bomb.png")
 	sunImg = loadImage("assets/sun.png")
+	grassImg = loadImage("assets/grass.png")
 
 	if err := ebiten.RunGame(&Game{
 		squirrel:     NewSquirrel(),

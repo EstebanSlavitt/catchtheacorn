@@ -10,11 +10,11 @@ type Squirrel struct {
 func NewSquirrel() Squirrel {
 	return Squirrel{
 		X: 160,
-		Y: 340,
+		Y: 360, // Adjusted to appear walking on Mario-style grass
 	}
 }
 
-func (g *Game)UpdateSquirrel() {
+func (g *Game) UpdateSquirrel() {
 	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
 		g.squirrel.X -= 4
 	}
