@@ -81,7 +81,7 @@ func (g *Game) UpdateAcorns() {
 			g.acorns[i] = NewAcorn()
 		}
 
-		if g.acorns[i].Y > 480 {
+		if g.acorns[i].Y > 380 {
 			g.acorns[i] = NewAcorn()
 		}
 	}
@@ -90,7 +90,9 @@ func (g *Game) UpdateAcorns() {
 func (g *Game) DrawAcorns(screen *ebiten.Image) {
 	for _, acorn := range g.acorns {
 		acornOpts := &ebiten.DrawImageOptions{}
-		scale := 0.07
+
+		// Set scale based on type
+		scale := 0.05 // Default for regular acorns
 		if acorn.IsMega {
 			scale = 0.1
 		}
@@ -105,6 +107,7 @@ func (g *Game) DrawAcorns(screen *ebiten.Image) {
 		} else {
 			img = acornImg
 		}
+
 		screen.DrawImage(img, acornOpts)
 	}
 }
