@@ -24,11 +24,12 @@ func NewAcorn() Acorn {
 }
 
 func SpawnAcorns() []Acorn {
-	return []Acorn{
-		NewAcorn(),
-		NewAcorn(),
-		NewAcorn(),
+	count := rand.Intn(4) + 2
+	acorns := make([]Acorn, count)
+	for i := range acorns {
+		acorns[i] = NewAcorn()
 	}
+	return acorns
 }
 
 func (g *Game) UpdateAcorns() {
@@ -85,14 +86,16 @@ func (g *Game) UpdateAcorns() {
 			g.acorns[i] = NewAcorn()
 		}
 	}
+	if rand.Float64() < 0.01 && len(g.acorns) < 8 {
+		g.acorns = append(g.acorns, NewAcorn())
+	}
 }
 
 func (g *Game) DrawAcorns(screen *ebiten.Image) {
 	for _, acorn := range g.acorns {
 		acornOpts := &ebiten.DrawImageOptions{}
 
-		// Set scale based on type
-		scale := 0.05 // Default for regular acorns
+		scale := 0.05
 		if acorn.IsMega {
 			scale = 0.1
 		}
