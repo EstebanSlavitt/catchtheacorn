@@ -25,7 +25,7 @@ var (
 
 type Game struct {
 	squirrel     Squirrel
-	acorns       []Acorn
+	acorns       []*Acorn
 	cloud1X      float64
 	cloud2X      float64
 	sunX         float64
