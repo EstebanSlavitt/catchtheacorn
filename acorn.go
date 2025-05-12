@@ -2,6 +2,7 @@ package main
 
 import (
 	"math/rand"
+	"slices"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -13,9 +14,9 @@ type Acorn struct {
 	IsBomb bool
 }
 
-func NewAcorn() Acorn {
+func NewAcorn() *Acorn {
 	r := rand.Float64()
-	return Acorn{
+	return &Acorn{
 		X:      float64(rand.Intn(600)),
 		Y:      0,
 		IsMega: r < 0.1,
@@ -23,9 +24,9 @@ func NewAcorn() Acorn {
 	}
 }
 
-func SpawnAcorns() []Acorn {
+func SpawnAcorns() []*Acorn {
 	count := rand.Intn(4) + 2
-	acorns := make([]Acorn, count)
+	acorns := make([]*Acorn, count)
 	for i := range acorns {
 		acorns[i] = NewAcorn()
 	}
@@ -79,13 +80,19 @@ func (g *Game) UpdateAcorns() {
 			} else {
 				g.score++
 			}
-			g.acorns[i] = NewAcorn()
+			g.acorns[i] = nil
 		}
 
-		if g.acorns[i].Y > 380 {
-			g.acorns[i] = NewAcorn()
+		if g.acorns[i] != nil && g.acorns[i].Y > 400 {
+			g.acorns[i] = nil
 		}
 	}
+
+	// removing empty elements from the array
+	g.acorns = slices.DeleteFunc(g.acorns, func(acorn *Acorn) bool {
+		return acorn == nil
+	})
+
 	if rand.Float64() < 0.01 && len(g.acorns) < 8 {
 		g.acorns = append(g.acorns, NewAcorn())
 	}
