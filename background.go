@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,12 +27,7 @@ func (g *Game) UpdateBackground() {
 
 func (g *Game) DrawBackground(screen *ebiten.Image) {
 
-	bgOpts := &ebiten.DrawImageOptions{}
-	bgOpts.GeoM.Scale(
-		640.0/float64(backgroundImg.Bounds().Dx()),
-		480.0/float64(backgroundImg.Bounds().Dy()),
-	)
-	screen.DrawImage(backgroundImg, bgOpts)
+	screen.Fill(color.RGBA{R: 109, G: 211, B: 217, A: 100})
 
 	sunOpts := &ebiten.DrawImageOptions{}
 	sunOpts.GeoM.Scale(0.18, 0.18)
@@ -53,14 +49,13 @@ func (g *Game) DrawBackground(screen *ebiten.Image) {
 	treeOpts.GeoM.Translate(120, 30)
 	screen.DrawImage(treeImg, treeOpts)
 
-	grassOpts := &ebiten.DrawImageOptions{}
-	const grassScale = 0.25
-	grassOpts.GeoM.Scale(
-		grassScale, grassScale,
-	)
-	grassOffsetY := float64(screen.Bounds().Dy()) - (grassScale * float64(grassImg.Bounds().Dy())) + 10
-	grassOpts.GeoM.Translate(-10, grassOffsetY)
-	screen.DrawImage(grassImg, grassOpts)
-	grassOpts.GeoM.Translate(grassScale*float64(grassImg.Bounds().Dx())-40, 0)
-	screen.DrawImage(grassImg, grassOpts)
+	grassWidth := float64(grassImg.Bounds().Dx())
+	grassY := float64(screen.Bounds().Dy()) - float64(grassImg.Bounds().Dy())
+
+	for x := 0.0; x < 640; x += grassWidth {
+		grassOpts := &ebiten.DrawImageOptions{}
+		grassOpts.GeoM.Translate(x, grassY)
+		screen.DrawImage(grassImg, grassOpts)
+	}
+
 }
